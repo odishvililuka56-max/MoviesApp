@@ -1,22 +1,62 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
-export const MovieCard = ({ singleMovie }) => {
-  let [isInFavorites, setIsInFavorites] = useState("Add to Favorites");
+import { useEffect, useState } from "react";
+
+export const MovieCard = ({
+  singleMovie,
+  removeFromFavorites = null,
+}) => {
+  const isFavoriteSaved = () => {
+    const saved = localStorage.getItem("my_favs");
+    const favMovies = saved ? JSON.parse(saved) : [];
+    return favMovies.some((movie) => movie.id === singleMovie.id);
+  };
+
+  const [isInFavorites, setIsInFavorites] = useState(isFavoriteSaved);
+  const [statusMessage, setStatusMessage] = useState("");
+
+  useEffect(() => {
+    const updateFavoriteStatus = () => setIsInFavorites(isFavoriteSaved());
+    window.addEventListener("favoritesChanged", updateFavoriteStatus);
+    window.addEventListener("storage", updateFavoriteStatus);
+
+    return () => {
+      window.removeEventListener("favoritesChanged", updateFavoriteStatus);
+      window.removeEventListener("storage", updateFavoriteStatus);
+    };
+  }, [singleMovie.id]);
+
+  function saveStatus(message) {
+    localStorage.setItem("favoriteStatus", message);
+    localStorage.setItem("favorite_status", message);
+    setStatusMessage(message);
+  }
 
   function handleFavorites() {
+    if (removeFromFavorites) {
+      removeFromFavorites(singleMovie.id);
+      saveStatus(`“${singleMovie.title}” removed from favorites!`);
+      return;
+    }
+
     const saved = localStorage.getItem("my_favs");
-    let favMovies = saved ? JSON.parse(saved) : [];
+    const favMovies = saved ? JSON.parse(saved) : [];
+    const isIncluded = favMovies.some((movie) => movie.id === singleMovie.id);
 
-    const isIncuded = favMovies.some((movie) => movie.id === singleMovie.id);
-
-    if (!isIncuded) {
+    if (isIncluded) {
+      const updatedFavs = favMovies.filter(
+        (movie) => movie.id !== singleMovie.id,
+      );
+      localStorage.setItem("my_favs", JSON.stringify(updatedFavs));
+      setIsInFavorites(false);
+      saveStatus(`“${singleMovie.title}” removed from favorites!`);
+    } else {
       const updatedFavs = [...favMovies, singleMovie];
       localStorage.setItem("my_favs", JSON.stringify(updatedFavs));
-      alert("Movie added to favorites!");
-    } else {
-      setIsInFavorites("Remove from Favorites");
-      alert("Movie is already in favorites!");
+      setIsInFavorites(true);
+      saveStatus(`“${singleMovie.title}” added to favorites!`);
     }
+
+    window.dispatchEvent(new Event("favoritesChanged"));
   }
 
   return (
@@ -25,9 +65,15 @@ export const MovieCard = ({ singleMovie }) => {
         className="movie-card-favorite"
         type="button"
         onClick={handleFavorites}
+        aria-pressed={isInFavorites}
       >
-        {isInFavorites}
+        {isInFavorites ? "Remove from Favorites" : "Add to Favorites"}
       </button>
+      {statusMessage && (
+        <p className="movie-card-status" role="status">
+          {statusMessage}
+        </p>
+      )}
       <Link to={`/movie/${singleMovie.id}`} className="movie-card-poster-link">
         <img
           className="movie-card-poster"

@@ -248,6 +248,14 @@ main {
   font-weight: 700;
 }
 
+.movie-card-status {
+  margin: 0;
+  padding: 7px 10px;
+  background: #fff8d6;
+  color: #1f1f2e;
+  font-size: 13px;
+}
+
 /* Movie details */
 .movie-details-back {
   display: inline-block;

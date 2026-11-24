@@ -5,12 +5,11 @@ import { MovieCard } from "../movieCard/movieCard";
 export const MovieGrid = ({
   movieList = movies,
   title = "View All Movies",
+  removeFromFavorites = null,
 }) => {
   const [searchWord, setSearchWord] = useState("");
-  // const [rating, setRating] = useState(0);
-  // const [releaseYear, setReleaseYear] = useState(0);
+
   function searchItem(e) {
-    console.log(e.target.value);
     setSearchWord(e.target.value);
   }
 
@@ -34,7 +33,11 @@ export const MovieGrid = ({
       </div>
       <div className="movie-grid">
         {filteredMovies.map((item) => (
-          <MovieCard key={item.id} singleMovie={item} />
+          <MovieCard
+            key={item.id}
+            singleMovie={item}
+            removeFromFavorites={removeFromFavorites}
+          />
         ))}
       </div>
     </section>
